@@ -1,0 +1,118 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление услугами
+
+  section.section
+    form.form-row(method="GET" action="/admin/services")
+      input(type="search" name="q" value=(typeof q === 'string' ? q : '') placeholder="Поиск по названию/описанию/категории" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/services") Сбросить
+
+  section.section
+    h2 Категории
+    form.form-row#form-create-category
+      input(name="name" placeholder="Название категории" required maxlength="128")
+      input(name="sort_order" type="number" step="1" value="0" placeholder="Порядок")
+      button.btn.btn-primary(type="submit") Добавить категорию
+
+    if !categories.length
+      p.muted Категорий пока нет.
+    else
+      table.table#categories-admin-table
+        thead
+          tr
+            th #
+            th Название
+            th Порядок
+            th Действия
+        tbody
+          each c in categories
+            tr(data-id=c.id)
+              td= c.id
+              td= c.name
+              td= c.sort_order
+              td
+                button.btn.btn-link.delete-entity(type="button" data-entity="service-category" data-id=c.id data-label=c.name) Удалить
+
+  section.section
+    h2 Услуги
+    form.form-row#form-create-service
+      select(name="category_id" required)
+        option(value="") Категория…
+        each c in categories
+          option(value=c.id)= c.name
+      input(name="name" placeholder="Название услуги" required maxlength="128")
+      input(name="duration_min" type="number" min="15" step="15" value="30" placeholder="Длительность, мин" required)
+      input(name="base_price" type="number" min="0" step="0.01" value="0" placeholder="Цена" required)
+      input(name="description" placeholder="Описание" maxlength="2000")
+      button.btn.btn-primary(type="submit") Добавить услугу
+
+    if !services.length
+      p.muted Услуг пока нет.
+    else
+      table.table#services-admin-table
+        thead
+          tr
+            th Превью
+            th #
+            th Категория
+            th Название
+            th Длит., мин
+            th Цена
+            th Активна
+            th Изображение
+            th Действия
+        tbody
+          each s in services
+            tr(data-id=s.id)
+              td
+                img.thumbnail(src=(s.image_url || '/img/placeholder.png') alt=s.name width="48" height="48")
+              td= s.id
+              td= s.category_name
+              td.editable(data-field="name")= s.name
+              td.editable(data-field="duration_min")= s.duration_min
+              td.editable(data-field="base_price") #{Number(s.base_price).toFixed(2)}
+              td
+                input.active-toggle(type="checkbox" checked=!!s.is_active data-id=s.id)
+              td
+                form.service-image-form(enctype="multipart/form-data" data-id=s.id)
+                  input(type="file" name="image" accept="image/jpeg,image/png,image/webp" required)
+                  button.btn.btn-link(type="submit") Загрузить
+                if s.image_url
+                  button.btn.btn-link.delete-service-image(type="button" data-id=s.id) Удалить картинку
+              td
+                button.btn.btn-link.delete-entity(type="button" data-entity="service" data-id=s.id data-label=s.name) Деактивировать
+
+  section.section
+    h2 Привязки мастер ↔ услуга
+    form.form-row#form-attach-master-service
+      select(name="master_id" required)
+        option(value="") Мастер…
+        each m in masters
+          option(value=m.id)= m.full_name + (m.is_active ? '' : ' (неактивен)')
+      select(name="service_id" required)
+        option(value="") Услуга…
+        each s in services
+          option(value=s.id)= s.name + (s.is_active ? '' : ' (неактивна)')
+      button.btn.btn-primary(type="submit") Привязать
+
+    if !masterServices.length
+      p.muted Пока нет привязок мастеров к услугам.
+    else
+      table.table#master-services-admin-table
+        thead
+          tr
+            th Мастер
+            th Услуга
+            th Действия
+        tbody
+          each ms in masterServices
+            tr(data-master-id=ms.master_id data-service-id=ms.service_id)
+              td= ms.master_name
+              td= ms.service_name
+              td
+                button.btn.btn-link.detach-master-service(type="button" data-master-id=ms.master_id data-service-id=ms.service_id) Открепить
+
+  +confirmDeleteModal()

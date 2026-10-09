@@ -1,0 +1,42 @@
+doctype html
+html(lang="ru")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= title ? `${title} — Салон-парикмахерская` : 'Салон-парикмахерская HAIR SALON'
+    link(rel="stylesheet" href="/css/styles.css")
+    script(src="https://code.jquery.com/jquery-3.7.1.min.js")
+    script(src="/js/app.js" defer)
+  body
+    header.site-header
+      .container.header-inner
+        a.logo(href="/") ✂ "HAIR SALON"
+        nav.main-nav
+          a(href="/services" class=(path && path.startsWith('/services') ? 'active' : '')) Каталог услуг
+          a(href="/masters" class=(path && path.startsWith('/masters') ? 'active' : '')) Наши Мастера
+          if user
+            if user.role_code === 'client'
+              a(href="/appointments/new") Записаться
+              a(href="/account") Мои записи
+            if user.role_code === 'master'
+              a(href="/account/master") Моё расписание
+            if user.role_code === 'admin'
+              a(href="/admin") Админ-панель
+              a(href="/admin/users") Пользователи
+              a(href="/admin/clients") Клиенты
+              a(href="/admin/masters") Мастера
+              a(href="/admin/categories") Категории
+              a(href="/admin/services") Услуги
+              a(href="/admin/schedules") Расписания
+              a(href="/admin/appointments") Записи
+              a(href="/admin/reports") Отчёты
+            form.logout-form(method="POST" action="/auth/logout")
+              button.btn.btn-link(type="submit") Выйти (#{user.login})
+          else
+            a(href="/auth/login") Вход
+            a(href="/auth/register") Регистрация
+    main.container
+      block content
+    footer.site-footer
+      .container
+        p © #{new Date().getFullYear()} АС «Салон-парикмахерская» HAIR SALON. Все права защищены.

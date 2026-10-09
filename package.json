@@ -1,0 +1,41 @@
+{
+  "name": "salon-app",
+  "version": "1.0.0",
+  "description": "Автоматизированная система управления деятельностью салона-парикмахерской HAIR SALON",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
+    "test": "mocha --reporter spec --timeout 10000 \"tests-smoke/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "salon",
+    "express",
+    "mvc",
+    "mysql",
+    "pug"
+  ],
+  "author": "Darol",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.0",
+    "pug": "^3.0.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.5.0",
+    "fast-check": "^3.23.1",
+    "mocha": "^10.7.3",
+    "supertest": "^7.0.0"
+  }
+}

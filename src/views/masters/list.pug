@@ -1,0 +1,21 @@
+extends ../layout
+
+block content
+  h1 Мастера
+  .filter-bar
+    form(method="GET" action="/masters")
+      input(type="search" name="q" value=q placeholder="Поиск по ФИО/специализации/био" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+  if !masters.length
+    p.muted Мастеров по запросу не найдено.
+  else
+    .grid.cards
+      each m in masters
+        article.card
+          img.card-image.master-photo(src=(m.photo_url || '/img/placeholder.png') alt=m.full_name loading="lazy")
+          h3= m.full_name
+          if m.specialization
+            p.muted= m.specialization
+          if m.bio
+            p= m.bio
+          a.btn.btn-link(href=`/masters/${m.id}`) Подробнее →

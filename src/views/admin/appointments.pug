@@ -1,0 +1,46 @@
+extends ../layout
+include ../partials/statusDropdown
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление записями
+
+  section.section
+    form.form-row(method="GET" action="/admin/appointments")
+      input(type="search" name="q" value=q placeholder="Поиск по клиенту/мастеру/услуге/дате/статусу" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/appointments") Сбросить
+
+  section.section
+    h2 Список записей
+    if !appointments.length
+      p.muted Записей пока нет.
+    else
+      table.table
+        thead
+          tr
+            th #
+            th Клиент
+            th Мастер
+            th Услуга
+            th Начало
+            th Окончание
+            th Статус
+            th Действия
+        tbody
+          each a in appointments
+            tr(data-id=a.id)
+              td= a.id
+              td= a.client_name
+              td= a.master_name
+              td= a.service_name
+              td= a.start_at
+              td= a.end_at
+              td
+                +statusDropdown(a, user)
+              td
+                button.btn.btn-link.cancel-appointment(type="button" data-id=a.id) Отменить
+                button.btn.btn-link.reschedule-appointment(type="button" data-id=a.id data-master-id=a.master_id) Перенести
+                button.btn.btn-link.delete-entity(type="button" data-entity="appointment" data-id=a.id data-label=`#${a.id}: ${a.client_name} → ${a.master_name}`) Удалить
+
+  +confirmDeleteModal()

@@ -1,0 +1,28 @@
+# Автоматически нормализовать переносы строк к LF в репозитории
+* text=auto eol=lf
+
+# Явно указать бинарные файлы (чтобы Git их не трогал)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+
+# Windows-специфичные файлы — оставить CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Обычные текстовые файлы — LF
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.pug  text eol=lf
+*.css  text eol=lf
+*.sql  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

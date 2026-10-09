@@ -1,0 +1,59 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление расписаниями
+
+  section.section
+    form.form-row(method="GET" action="/admin/schedules")
+      input(type="search" name="q" value=q placeholder="Поиск по ФИО мастера или дате (YYYY-MM-DD)" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/schedules") Сбросить
+
+  section.section
+    h2 Создать расписание
+    form.form-row#form-create-schedule
+      select(name="master_id" required)
+        option(value="") Мастер…
+        each m in masters
+          option(value=m.id)= m.full_name
+      input(name="date" type="date" required)
+      input(name="start_time" type="time" value="10:00" required)
+      input(name="end_time" type="time" value="18:00" required)
+      input(name="slot_min" type="number" min="15" step="15" value="30" required)
+      button.btn.btn-primary(type="submit") Создать
+
+  section.section
+    h2 Список расписаний
+    if !schedules.length
+      p.muted Расписаний пока нет.
+    else
+      table.table
+        thead
+          tr
+            th #
+            th Мастер
+            th Дата
+            th Начало
+            th Конец
+            th Шаг
+            th Слотов
+            th Свободно
+            th Занято
+            th Действия
+        tbody
+          each s in schedules
+            tr(data-id=s.id)
+              td= s.id
+              td= s.master_name
+              td= s.work_date
+              td= s.start_time
+              td= s.end_time
+              td= s.slot_min
+              td= s.slots_total
+              td= s.slots_free
+              td= s.slots_busy
+              td
+                button.btn.btn-link.delete-entity(type="button" data-entity="schedule" data-id=s.id data-label=`${s.master_name} ${s.work_date}`) Удалить
+
+  +confirmDeleteModal()

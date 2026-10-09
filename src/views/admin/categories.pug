@@ -1,0 +1,43 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление категориями услуг
+
+  section.section
+    form.form-row(method="GET" action="/admin/categories")
+      input(type="search" name="q" value=q placeholder="Поиск по названию категории" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/categories") Сбросить
+
+  section.section
+    h2 Создать категорию
+    form.form-row#form-create-category
+      input(name="name" placeholder="Название категории" required maxlength="128")
+      input(name="sort_order" type="number" step="1" value="0" placeholder="Порядок")
+      button.btn.btn-primary(type="submit") Добавить
+
+  section.section
+    h2 Список категорий
+    if !categories.length
+      p.muted Категорий пока нет.
+    else
+      table.table
+        thead
+          tr
+            th #
+            th Название
+            th Порядок
+            th Услуг
+            th Действия
+        tbody
+          each c in categories
+            tr(data-id=c.id)
+              td= c.id
+              td= c.name
+              td= c.sort_order
+              td= c.services_count
+              td
+                button.btn.btn-link.delete-entity(type="button" data-entity="service-category" data-id=c.id data-label=c.name) Удалить
+
+  +confirmDeleteModal()

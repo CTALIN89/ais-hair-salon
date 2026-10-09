@@ -1,0 +1,25 @@
+extends ../layout
+
+block content
+  .auth-card
+    h1 Вход в систему
+    if error
+      .alert.alert-error= error
+    form(method="POST" action="/auth/login")
+      .field
+        label(for="login") Логин
+        input#login(name="login" value=(form && form.login) || '' required autocomplete="username")
+      .field
+        label(for="password") Пароль
+        input#password(name="password" type="password" required autocomplete="current-password")
+      button.btn.btn-primary(type="submit") Войти
+    p.muted
+      | Нет аккаунта?
+      |  
+      a(href="/auth/register") Зарегистрироваться
+    .auth-hint
+      h4 Демо-учётные записи:
+      ul
+        li admin / admin123 (администратор)
+        li ivanov / master123 (мастер)
+        li client1 / client123 (клиент)

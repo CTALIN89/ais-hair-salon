@@ -1,0 +1,11 @@
+extends ../layout
+
+block content
+  section.error-page
+    h1 404 — Страница не найдена
+    p.muted
+      | Запрошенный адрес не существует или был удалён.
+      | Проверьте ссылку или вернитесь на главную.
+    .actions
+      a.btn.btn-link(href="/") На главную
+      a.btn.btn-link(href="/services") К услугам

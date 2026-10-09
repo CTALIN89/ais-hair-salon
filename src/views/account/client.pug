@@ -1,0 +1,77 @@
+extends ../layout
+include ../partials/statusDropdown
+
+//- Кабинет клиента. 
+
+block content
+  - var STATUS_LABELS = { Created: 'Создана', Confirmed: 'Подтверждена', InService: 'В процессе', Completed: 'Выполнена', Cancelled: 'Отменена', Rescheduled: 'Перенесена', Archived: 'В архиве' };
+  - function fmtPrice(v){ return (v === null || v === undefined) ? '—' : Number(v).toFixed(0) + ' ₽'; }
+
+  h1 Личный кабинет клиента
+
+  section.profile-card
+    h2 Профиль
+    dl.profile-list
+      dt ФИО
+      dd= client.full_name || '—'
+      dt Email
+      dd= client.email || '—'
+      dt Телефон
+      dd= client.phone || '—'
+
+  section.section
+    .section-head
+      h2 Активные записи
+      a.btn.btn-primary(href="/appointments/new") + Новая запись
+
+    if !active || active.length === 0
+      p.muted У вас пока нет активных записей. Запишитесь на услугу, чтобы они появились здесь.
+    else
+      table.table.appointments-table
+        thead
+          tr
+            th Дата и время
+            th Услуга
+            th Мастер
+            th Цена
+            th Статус
+            th Действия
+        tbody
+          each a in active
+            tr(data-id=a.id)
+              td= a.start_at
+              td
+                = a.service_name
+                if a.service_duration_min
+                  |  
+                  span.muted (#{a.service_duration_min} мин)
+              td= a.master_name
+              td= fmtPrice(a.actual_price || a.base_price)
+              td
+                +statusDropdown(a, user)
+              td.row-actions
+                button.btn.btn-link.cancel-btn(type="button" data-id=a.id) Отменить
+                button.btn.btn-link.reschedule-btn(type="button" data-id=a.id) Перенести
+
+  section.section
+    h2 История посещений
+    if !history || history.length === 0
+      p.muted История пуста.
+    else
+      table.table.appointments-table
+        thead
+          tr
+            th Дата и время
+            th Услуга
+            th Мастер
+            th Фактическая цена
+            th Статус
+        tbody
+          each a in history
+            tr(data-id=a.id)
+              td= a.start_at
+              td= a.service_name
+              td= a.master_name
+              td= fmtPrice(a.actual_price)
+              td
+                span.status(class=`status-${a.status}`)= STATUS_LABELS[a.status] || a.status

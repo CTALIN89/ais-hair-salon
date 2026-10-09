@@ -1,0 +1,12 @@
+extends ../layout
+
+block content
+  section.error-page
+    h1 403 — Доступ запрещён
+    p.muted
+      | У вашей роли нет прав на просмотр этой страницы.
+      | Если вы считаете, что это ошибка, обратитесь к администратору.
+    .actions
+      a.btn.btn-link(href="/") На главную
+      if !user
+        a.btn.btn-link(href="/auth/login") Войти в систему

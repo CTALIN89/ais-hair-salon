@@ -1,0 +1,92 @@
+extends ../layout
+
+//- Мастер записи (wizard) на четыре шага. 
+
+block content
+  h1 Запись на обслуживание
+
+  section#booking-wizard.booking-wizard(
+    data-preselect-service=(preselected && preselected.service_id) || ''
+    data-preselect-master=(preselected && preselected.master_id) || ''
+    data-preselect-date=(preselected && preselected.date) || ''
+  )
+    .booking-progress(aria-hidden="true")
+      span.step-dot.active(data-step-dot="1") 1
+      span.step-dot(data-step-dot="2") 2
+      span.step-dot(data-step-dot="3") 3
+      span.step-dot(data-step-dot="4") 4
+
+    //- Шаг 1. Выбор услуги. Категории подгружаются из /api/services/categories,
+    //- список услуг — из /api/services (опционально с фильтром по категории).
+    section.booking-step.active(data-step="1")
+      h2 Шаг 1. Выберите услугу
+      .field
+        label(for="wizard-category") Категория
+        select#wizard-category(name="category_id")
+          option(value="") Все категории
+      .wizard-list#wizard-services(role="list" aria-label="Список услуг")
+        p.muted Загрузка каталога…
+      .wizard-actions
+        span.muted Выберите услугу, чтобы продолжить.
+        button.btn.btn-primary.wizard-next(type="button" data-next-step="2" disabled) Далее →
+
+    //- Шаг 2. Выбор мастера из тех, кто оказывает выбранную услугу.
+    //- Подгружается из /api/services/:id/masters.
+    section.booking-step(data-step="2")
+      h2 Шаг 2. Выберите мастера
+      .wizard-list#wizard-masters(role="list" aria-label="Список мастеров")
+        p.muted Сначала выберите услугу.
+      .wizard-actions
+        button.btn.btn-secondary.wizard-prev(type="button" data-prev-step="1") ← Назад
+        button.btn.btn-primary.wizard-next(type="button" data-next-step="3" disabled) Далее →
+
+    //- Шаг 3. Выбор даты. Допустимый диапазон — от сегодня до +13 дней
+    //- включительно (итого 14 дней). min/max задаются
+    //- сервером, клиентский скрипт дополнительно перепроверяет input.
+    section.booking-step(data-step="3")
+      h2 Шаг 3. Выберите дату
+      - var _today = new Date(); _today.setHours(0,0,0,0);
+      - var _min = _today.toISOString().slice(0,10);
+      - var _maxDate = new Date(_today.getTime() + 13*24*60*60*1000);
+      - var _max = _maxDate.toISOString().slice(0,10);
+      .field
+        label(for="wizard-date") Дата
+        input#wizard-date(
+          type="date"
+          name="date"
+          min=_min
+          max=_max
+          required
+        )
+      .wizard-actions
+        button.btn.btn-secondary.wizard-prev(type="button" data-prev-step="2") ← Назад
+        button.btn.btn-primary.wizard-next(type="button" data-next-step="4" disabled) Далее →
+
+    //- Шаг 4. Выбор слота. Подгружается из
+    //- /api/masters/:id/slots?date=...&service_id=... — только стартовые
+    //- слоты, от которых можно набрать непрерывную цепочку нужной длины.
+    section.booking-step(data-step="4")
+      h2 Шаг 4. Выберите время
+      .slots#wizard-slots(role="list" aria-label="Свободные интервалы")
+        p.muted Выберите дату, чтобы увидеть доступные интервалы.
+
+      //- Блок итога: заполняется клиентским скриптом при выборе слота.
+      //- Скрыт до шага 4; отображается только если есть выбранный слот.
+      .booking-summary#wizard-summary(hidden)
+        h3 Проверьте детали
+        dl.summary-list
+          dt Услуга
+          dd#summary-service —
+          dt Мастер
+          dd#summary-master —
+          dt Дата и время
+          dd#summary-slot —
+          dt Стоимость
+          dd#summary-price —
+
+      .wizard-actions
+        button.btn.btn-secondary.wizard-prev(type="button" data-prev-step="3") ← Назад
+        button.btn.btn-primary#wizard-confirm(type="button" disabled) Подтвердить запись
+
+    //- Контейнер для сообщений об успехе/ошибке (заполняется AJAX-обработчиком).
+    .booking-result#wizard-result(hidden role="status" aria-live="polite")

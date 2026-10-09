@@ -1,0 +1,24 @@
+//- Salon-enhancements partial: dropdown смены статуса записи.
+//- Используется в admin/appointments.pug, account/master.pug, account/client.pug.
+
+mixin statusDropdown(appointment, currentUser)
+  -
+    var ALL_STATUSES = ['Created', 'Confirmed', 'InService', 'Completed', 'Cancelled', 'Rescheduled'];
+    var role = currentUser && (currentUser.role_code || (currentUser.role && currentUser.role.code));
+    var allowed = [];
+    if (role === 'admin') {
+      allowed = ALL_STATUSES.filter(function(s){ return s !== appointment.status; });
+    } else if (role === 'master' && Number(appointment.master_id) === Number(currentUser.id)) {
+      allowed = ALL_STATUSES.filter(function(s){ return s !== appointment.status; });
+    } else if (role === 'client'
+               && Number(appointment.client_id) === Number(currentUser.id)
+               && ['Created', 'Confirmed', 'Rescheduled'].indexOf(appointment.status) >= 0) {
+      allowed = ['Cancelled'];
+    }
+  if allowed.length
+    select.status-dropdown(data-appointment-id=appointment.id)
+      option(value='', selected) #{appointment.status}
+      each s in allowed
+        option(value=s)= s
+  else
+    span.status-static= appointment.status

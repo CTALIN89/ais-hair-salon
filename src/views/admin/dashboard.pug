@@ -1,0 +1,112 @@
+extends ../layout
+
+block content
+  h1 Панель администратора
+
+  //- Карточки со сводной статистикой: число категорий, услуг, мастеров,
+  //- клиентов, пользователей. Данные готовит adminController.dashboard.
+  section.section
+    .grid.cards.stats-row
+      .card.stat-card
+        h3 Категорий услуг
+        p.price.big= stats.categories
+      .card.stat-card
+        h3 Услуг
+        p.price.big= stats.services
+      .card.stat-card
+        h3 Мастеров
+        p.price.big= stats.masters
+      .card.stat-card
+        h3 Клиентов
+        p.price.big= stats.clients
+      .card.stat-card
+        h3 Пользователей всего
+        p.price.big= stats.users
+
+  section.section
+    h2 Быстрые переходы
+    .info-row
+      a.btn.btn-primary(href="/admin/services") Услуги и расписания
+      a.btn.btn-secondary(href="/admin/reports") Отчёты
+
+  //- Форма создания пользователя (админ, мастер, клиент).
+  //- POST /api/admin/users — AJAX (обработчик в public/js/app.js).
+  section.section
+    h2 Создать пользователя
+    form.form-row#form-create-user
+      select(name="role" required)
+        option(value="") Роль…
+        option(value="master") Мастер
+        option(value="admin") Администратор
+        option(value="client") Клиент
+      input(name="login" placeholder="Логин" required minlength="3" maxlength="64")
+      input(name="password" placeholder="Пароль" type="password" required minlength="8" maxlength="128")
+      input(name="full_name" placeholder="ФИО" required maxlength="128")
+      input(name="email" placeholder="Email" type="email" required maxlength="128")
+      input(name="phone" placeholder="Телефон" required maxlength="32")
+      input(name="specialization" placeholder="Специализация (для мастера)" maxlength="128")
+      input(name="photo_url" type="url" placeholder="URL фото мастера (опционально)" maxlength="512")
+      button.btn.btn-primary(type="submit") Создать
+
+  //- Таблица пользователей с возможностью деактивировать.
+  //- Form action=/api/admin/users/:id/deactivate — запасной no-JS путь.
+  
+  section.section
+    h2 Пользователи
+    if !users.length
+      p.muted Пользователей пока нет.
+    else
+      table.table#users-admin-table
+        thead
+          tr
+            th #
+            th Логин
+            th ФИО
+            th Email
+            th Телефон
+            th Роль
+            th Активен
+            th Действия
+        tbody
+          each u in users
+            tr(data-id=u.id data-role=u.role_code)
+              td= u.id
+              td= u.login
+              td= u.full_name
+              td= u.email
+              td= u.phone
+              td
+                select.role-select(data-id=u.id)
+                  option(value="client" selected=(u.role_code === 'client')) Клиент
+                  option(value="master" selected=(u.role_code === 'master')) Мастер
+                  option(value="admin" selected=(u.role_code === 'admin')) Админ
+              td= u.is_active ? 'Да' : 'Нет'
+              td
+                if u.is_active
+                  button.btn.btn-link.deactivate-user(type="button" data-id=u.id) Деактивировать
+                else
+                  button.btn.btn-link.activate-user(type="button" data-id=u.id) Активировать
+
+  //- Таблица мастеров со ссылками на управление услугами и расписаниями.
+  section.section
+    h2 Мастера
+    if !masters.length
+      p.muted Мастеров пока нет.
+    else
+      table.table#masters-admin-table
+        thead
+          tr
+            th #
+            th ФИО
+            th Специализация
+            th Активен
+            th Действия
+        tbody
+          each m in masters
+            tr(data-id=m.id)
+              td= m.id
+              td= m.full_name
+              td= m.specialization || '—'
+              td= m.is_active ? 'Да' : 'Нет'
+              td
+                a.btn.btn-link(href="/admin/services#master-" + m.id) Услуги и расписание

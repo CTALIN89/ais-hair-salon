@@ -1,0 +1,12 @@
+//- Salon-enhancements partial: модальное окно подтверждения удаления.
+//- Глобальный пустой контейнер; AJAX в app.js заполняет текст и URL, показывает/скрывает модалку.
+
+mixin confirmDeleteModal()
+  .modal#confirm-delete-modal(role="dialog" aria-modal="true" aria-hidden="true" hidden)
+    .modal-backdrop
+    .modal-window
+      h3.modal-title Подтверждение удаления
+      p.modal-message#confirm-delete-message Удалить?
+      .modal-actions
+        button.btn.btn-secondary(type="button" data-action="cancel") Отмена
+        button.btn.btn-danger#confirm-delete-button(type="button" data-action="confirm") Подтвердить удаление

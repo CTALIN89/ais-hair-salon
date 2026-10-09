@@ -1,0 +1,41 @@
+extends layout
+
+block content
+  section.hero
+    h1 Салон-парикмахерская "HAIR SALON"
+    p.lead Стрижки, окрашивание, укладки, бритье. Запишитесь онлайн всего за пару кликов.
+    .hero-cta
+      a.btn.btn-primary(href="/appointments/new") Записаться онлайн
+      a.btn.btn-secondary(href="/services") Все услуги
+
+  section.section
+    h2 Популярные услуги
+    if !featuredServices || !featuredServices.length
+      p.muted Каталог услуг скоро появится.
+    else
+      .grid.cards
+        each s in featuredServices
+          article.card
+            h3= s.name
+            p.muted= s.category_name
+            if s.description
+              p= s.description
+            .card-meta
+              span.price #{Number(s.base_price).toFixed(0)} ₽
+              span.duration #{s.duration_min} мин
+            a.btn.btn-link(href=`/services/${s.id}`) Подробнее →
+
+  section.section
+    h2 Наши мастера
+    if !featuredMasters || !featuredMasters.length
+      p.muted Команда мастеров скоро появится.
+    else
+      .grid.cards
+        each m in featuredMasters
+          article.card
+            h3= m.full_name
+            if m.specialization
+              p.muted= m.specialization
+            if m.bio
+              p= m.bio
+            a.btn.btn-link(href=`/masters/${m.id}`) Профиль →

@@ -1,0 +1,41 @@
+extends ../layout
+
+block content
+  nav.breadcrumbs
+    a(href="/masters") Мастера
+    |  → 
+    span= master.full_name
+  img.master-photo.master-photo-big(src=(master.photo_url || '/img/placeholder.png') alt=master.full_name)
+  h1= master.full_name
+  if master.specialization
+    p.muted= master.specialization
+  if master.bio
+    p= master.bio
+  .actions
+    a.btn.btn-primary(href=`/appointments/new?master_id=${master.id}`) Записаться к этому мастеру
+
+  section.section
+    h2 Услуги мастера
+    if !services || !services.length
+      p.muted Услуги не назначены.
+    else
+      ul.list
+        each s in services
+          li
+            a(href=`/services/${s.id}`)= s.name
+            |  — #{Number(s.base_price).toFixed(0)} ₽, #{s.duration_min} мин
+
+  section.section
+    h2 Ближайшие 14 дней
+    if !dates || !dates.length
+      p.muted Расписание на ближайшие дни ещё не сформировано.
+    else
+      ul.list.date-list
+        each d in dates
+          li
+            span.date= d.date
+            |  — 
+            if d.slotsCount > 0
+              a(href=`/appointments/new?master_id=${master.id}&date=${d.date}`) свободных слотов: #{d.slotsCount}
+            else
+              span.muted свободных слотов нет

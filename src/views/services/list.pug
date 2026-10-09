@@ -1,0 +1,33 @@
+extends ../layout
+
+block content
+  h1 Услуги салона
+  .filter-bar
+    form(method="GET" action="/services")
+      input(type="search" name="q" value=q placeholder="Поиск по названию/описанию/категории" maxlength="200")
+      label
+        | Категория:
+        |  
+        select#category-filter(name="category_id" onchange="this.form.submit()")
+          option(value="" selected=!selectedCategoryId) Все категории
+          each c in categories
+            option(value=c.id selected=selectedCategoryId === c.id)= c.name
+      button.btn.btn-primary(type="submit") Найти
+  if !services.length
+    p.muted Услуг по запросу не найдено.
+  else
+    .grid.cards#services-list
+      each s in services
+        article.card(data-category-id=s.category_id)
+          img.card-image(src=(s.image_url || '/img/placeholder.png') alt=s.name loading="lazy")
+          h3= s.name
+          p.muted= s.category_name
+          if s.description
+            p= s.description
+          .card-meta
+            span.price #{Number(s.base_price).toFixed(0)} ₽
+            span.duration #{s.duration_min} мин
+          .card-actions
+            a.btn.btn-link(href=`/services/${s.id}`) Подробнее →
+            if user && user.role_code === 'client'
+              a.btn.btn-primary(href=`/appointments/new?service_id=${s.id}`) Записаться

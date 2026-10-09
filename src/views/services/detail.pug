@@ -1,0 +1,30 @@
+extends ../layout
+
+block content
+  nav.breadcrumbs
+    a(href="/services") Услуги
+    |  → 
+    span= service.name
+  img.service-image(src=(service.image_url || '/img/placeholder.png') alt=service.name)
+  h1= service.name
+  p.muted Категория: #{service.category_name}
+  .info-row
+    span.price.big #{Number(service.base_price).toFixed(0)} ₽
+    span.duration #{service.duration_min} мин
+  if service.description
+    p= service.description
+  .actions
+    a.btn.btn-primary(href=`/appointments/new?service_id=${service.id}`) Записаться
+
+  section.section
+    h2 Мастера, оказывающие услугу
+    if !masters.length
+      p.muted Пока нет назначенных мастеров.
+    else
+      .grid.cards
+        each m in masters
+          article.card
+            h3= m.full_name
+            if m.specialization
+              p.muted= m.specialization
+            a.btn.btn-link(href=`/masters/${m.id}`) Профиль мастера →

@@ -1,0 +1,65 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление пользователями
+
+  section.section
+    form.form-row(method="GET" action="/admin/users")
+      input(type="search" name="q" value=q placeholder="Поиск по логину/ФИО/email/роли" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/users") Сбросить
+
+  section.section
+    h2 Создать пользователя
+    form.form-row#form-create-user
+      select(name="role" required)
+        option(value="") Роль…
+        option(value="master") Мастер
+        option(value="admin") Администратор
+        option(value="client") Клиент
+      input(name="login" placeholder="Логин" required minlength="3" maxlength="64")
+      input(name="password" placeholder="Пароль" type="password" required minlength="8" maxlength="128")
+      input(name="full_name" placeholder="ФИО" required maxlength="128")
+      input(name="email" placeholder="Email" type="email" required maxlength="128")
+      input(name="phone" placeholder="Телефон" required maxlength="32")
+      input(name="specialization" placeholder="Специализация (для мастера)" maxlength="128")
+      button.btn.btn-primary(type="submit") Создать
+
+  section.section
+    h2 Список пользователей
+    if !users.length
+      p.muted Пользователей пока нет.
+    else
+      table.table#users-admin-table
+        thead
+          tr
+            th #
+            th Логин
+            th ФИО
+            th Email
+            th Телефон
+            th Роль
+            th Активен
+            th Действия
+        tbody
+          each u in users
+            tr(data-id=u.id data-role=u.role_code)
+              td= u.id
+              td= u.login
+              td= u.full_name
+              td= u.email
+              td= u.phone
+              td
+                select.role-select(data-id=u.id disabled=u.is_last_active_admin title=u.is_last_active_admin ? 'Это последний активный администратор' : '')
+                  each role in roles
+                    option(value=role.code selected=(u.role_code === role.code))= role.name
+              td= u.is_active ? 'Да' : 'Нет'
+              td
+                if u.is_active
+                  button.btn.btn-link.deactivate-user(type="button" data-id=u.id disabled=u.is_last_active_admin title=u.is_last_active_admin ? 'Это последний активный администратор' : '') Деактивировать
+                else
+                  button.btn.btn-link.activate-user(type="button" data-id=u.id) Активировать
+                button.btn.btn-link.delete-entity(type="button" data-entity="user" data-id=u.id data-label=u.login disabled=u.is_last_active_admin title=u.is_last_active_admin ? 'Это последний активный администратор' : '') Удалить
+
+  +confirmDeleteModal()

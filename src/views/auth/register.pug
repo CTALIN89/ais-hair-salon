@@ -1,0 +1,31 @@
+extends ../layout
+
+block content
+  .auth-card
+    h1 Регистрация клиента
+    if error
+      .alert.alert-error= error
+    form(method="POST" action="/auth/register")
+      .field
+        label(for="full_name") ФИО
+        input#full_name(name="full_name" value=(form && form.full_name) || '' required minlength=2 maxlength=128 autocomplete="name")
+      .field
+        label(for="login") Логин
+        input#login(name="login" value=(form && form.login) || '' required minlength=3 maxlength=64 autocomplete="username")
+      .field
+        label(for="email") Email
+        input#email(name="email" type="email" value=(form && form.email) || '' required maxlength=128 autocomplete="email")
+      .field
+        label(for="phone") Телефон
+        input#phone(name="phone" value=(form && form.phone) || '' required autocomplete="tel")
+      .field
+        label(for="password") Пароль
+        input#password(name="password" type="password" required minlength=8 autocomplete="new-password")
+      .field
+        label(for="password2") Пароль (ещё раз)
+        input#password2(name="password2" type="password" required minlength=8 autocomplete="new-password")
+      button.btn.btn-primary(type="submit") Зарегистрироваться
+    p.muted
+      | Уже есть аккаунт?
+      |  
+      a(href="/auth/login") Войти

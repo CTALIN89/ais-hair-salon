@@ -1,0 +1,95 @@
+extends ../layout
+include ../partials/statusDropdown
+
+//- Кабинет мастера. 
+
+block content
+  - var STATUS_LABELS = { Created: 'Создана', Confirmed: 'Подтверждена', InService: 'В процессе', Completed: 'Выполнена', Cancelled: 'Отменена', Rescheduled: 'Перенесена', Archived: 'В архиве' };
+  - function fmtTime(v){ return v ? String(v).slice(11, 16) : '—'; }
+  - function fmtPrice(v){ return (v === null || v === undefined) ? '—' : Number(v).toFixed(0) + ' ₽'; }
+
+  h1 Личный кабинет мастера
+
+  section.profile-card
+    h2 Профиль
+    dl.profile-list
+      dt ФИО
+      dd= master.full_name || '—'
+      dt Специализация
+      dd= master.specialization || '—'
+      if master.email
+        dt Email
+        dd= master.email
+      if master.phone
+        dt Телефон
+        dd= master.phone
+
+  section.section
+    h2 Активные записи
+    form.form-row(method="GET" action="/account/master")
+      input(type="search" name="q" value=(typeof q === 'string' ? q : '') placeholder="Поиск по клиенту/услуге/дате" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/account/master") Сбросить
+    if !activeGrouped || activeGrouped.length === 0
+      p.muted Активных записей нет.
+    else
+      each group in activeGrouped
+        .day-block
+          h3.day-heading= group.date
+          table.table.appointments-table
+            thead
+              tr
+                th Время
+                th Клиент
+                th Телефон
+                th Услуга
+                th Длительность
+                th Статус
+                th Действия
+            tbody
+              each a in group.items
+                tr(data-id=a.id)
+                  td= fmtTime(a.start_at)
+                  td= a.client_name || '—'
+                  td= a.client_phone || '—'
+                  td= a.service_name
+                  td #{a.service_duration_min} мин
+                  td
+                    span.status(class=`status-${a.status}`)= STATUS_LABELS[a.status] || a.status
+                    +statusDropdown(a, user)
+                  td.row-actions.master-actions
+                    if a.status === 'Created'
+                      button.btn.btn-secondary.confirm-btn(type="button" data-id=a.id data-status="Confirmed") Подтвердить
+                    else if a.status === 'Rescheduled'
+                      button.btn.btn-secondary.confirm-btn(type="button" data-id=a.id data-status="Confirmed") Подтвердить
+                    else if a.status === 'Confirmed'
+                      button.btn.btn-secondary.start-btn(type="button" data-id=a.id data-status="InService") Начать
+                    else if a.status === 'InService'
+                      form.complete-form(data-id=a.id)
+                        input(type="number" name="actual_price" min="0" step="0.01" placeholder="Цена" value=a.base_price required)
+                        button.btn.btn-primary(type="submit") Завершить
+                    button.btn.btn-link.cancel-btn(type="button" data-id=a.id) Отменить
+                    button.btn.btn-link.reschedule-btn(type="button" data-id=a.id) Перенести
+
+  section.section
+    h2 История
+    if !history || history.length === 0
+      p.muted История пуста.
+    else
+      table.table.appointments-table
+        thead
+          tr
+            th Дата и время
+            th Клиент
+            th Услуга
+            th Статус
+            th Фактическая цена
+        tbody
+          each a in history
+            tr(data-id=a.id)
+              td= a.start_at
+              td= a.client_name || '—'
+              td= a.service_name
+              td
+                span.status(class=`status-${a.status}`)= STATUS_LABELS[a.status] || a.status
+              td= fmtPrice(a.actual_price)

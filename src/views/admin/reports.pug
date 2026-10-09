@@ -1,0 +1,85 @@
+extends ../layout
+
+block content
+  h1 Отчёты
+
+  //- Форма построения. AJAX-обвязка навешивается в public/js/app.js
+  
+  section.section
+    h2 Сформировать отчёт
+    form#report-form.form-row
+      label.field
+        span Тип отчёта
+        select(name="type" required)
+          option(value="revenue") Выручка по периоду
+          option(value="master_load") Загрузка мастеров
+          option(value="client_history") История посещений клиента
+      label.field
+        span С
+        input(name="date_from" type="date" required)
+      label.field
+        span По
+        input(name="date_to" type="date" required)
+      label.field#field-client-id
+        span Клиент (для client_history)
+        select(name="client_id")
+          option(value="") —
+          each c in clients
+            option(value=c.id)= c.full_name
+      button.btn.btn-primary(type="submit") Сформировать
+
+  //- Контейнер результата — заполняется AJAX-ом после POST /api/admin/reports
+  //- или при клике «Открыть» на строке таблицы отчётов (GET /api/admin/reports/:id).
+  section.section
+    h2 Результат
+    #report-result
+      if generated
+        h3 #{generated.type} · #{generated.date_from} — #{generated.date_to}
+        p Итого:
+          strong= generated.total_amount
+        if generated.items && generated.items.length
+          table.table
+            thead
+              tr
+                th #
+                th Label
+                th Value
+                th Extra
+            tbody
+              each it, i in generated.items
+                tr
+                  td= i + 1
+                  td= it.label
+                  td= it.value_num
+                  td= it.value_text
+        else
+          p.muted Пустой отчёт.
+      else
+        p.muted Заполните форму и нажмите «Сформировать».
+
+  section.section
+    h2 История отчётов
+    if !reports.length
+      p.muted Отчётов пока нет.
+    else
+      table.table#reports-table
+        thead
+          tr
+            th #
+            th Тип
+            th Период
+            th Создан
+            th Автор
+            th Действия
+        tbody
+          each r in reports
+            tr(data-id=r.id)
+              td= r.id
+              td= r.type
+              td #{r.date_from} — #{r.date_to}
+              td= r.created_at
+              td= r.creator_name
+              td
+                button.btn.btn-link.report-open(type="button" data-id=r.id) Открыть
+                |  · 
+                a.btn.btn-link(href=`/api/admin/reports/${r.id}/export?format=csv`) Экспорт CSV

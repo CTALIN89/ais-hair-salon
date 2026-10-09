@@ -1,0 +1,42 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление клиентами
+
+  section.section
+    form.form-row(method="GET" action="/admin/clients")
+      input(type="search" name="q" value=q placeholder="Поиск по ФИО, email, телефону, логину" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/clients") Сбросить
+
+  section.section
+    h2 Список клиентов
+    if !clients.length
+      p.muted Клиентов пока нет.
+    else
+      table.table
+        thead
+          tr
+            th #
+            th ФИО
+            th Email
+            th Телефон
+            th Дата рождения
+            th Активен
+            th Зарегистрирован
+            th Действия
+        tbody
+          each c in clients
+            tr(data-id=c.id)
+              td= c.id
+              td= c.full_name
+              td= c.email
+              td= c.phone
+              td= c.birth_date || '—'
+              td= c.is_active ? 'Да' : 'Нет'
+              td= c.created_at
+              td
+                button.btn.btn-link.delete-entity(type="button" data-entity="client" data-id=c.id data-label=c.full_name) Удалить
+
+  +confirmDeleteModal()

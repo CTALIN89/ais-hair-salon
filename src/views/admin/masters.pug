@@ -1,0 +1,48 @@
+extends ../layout
+include ../partials/confirmDeleteModal
+
+block content
+  h1 Управление мастерами
+
+  section.section
+    form.form-row(method="GET" action="/admin/masters")
+      input(type="search" name="q" value=q placeholder="Поиск по ФИО/email/специализации" maxlength="200")
+      button.btn.btn-primary(type="submit") Найти
+      a.btn.btn-link(href="/admin/masters") Сбросить
+
+  section.section
+    h2 Список мастеров
+    if !masters.length
+      p.muted Мастеров пока нет.
+    else
+      table.table
+        thead
+          tr
+            th Фото
+            th #
+            th ФИО
+            th Email
+            th Телефон
+            th Специализация
+            th Активен
+            th Действия
+        tbody
+          each m in masters
+            tr(data-id=m.id)
+              td
+                img.thumbnail(src=(m.photo_url || '/img/placeholder.png') alt=m.full_name width="48" height="48")
+              td= m.id
+              td= m.full_name
+              td= m.email
+              td= m.phone
+              td= m.specialization || '—'
+              td= m.is_active ? 'Да' : 'Нет'
+              td
+                form.master-photo-form(enctype="multipart/form-data" data-id=m.id)
+                  input(type="file" name="photo" accept="image/jpeg,image/png,image/webp" required)
+                  button.btn.btn-link(type="submit") Загрузить фото
+                if m.photo_url
+                  button.btn.btn-link.delete-master-photo(type="button" data-id=m.id) Удалить фото
+                button.btn.btn-link.delete-entity(type="button" data-entity="master" data-id=m.id data-label=m.full_name) Удалить
+
+  +confirmDeleteModal()
