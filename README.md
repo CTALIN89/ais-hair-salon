@@ -129,11 +129,11 @@ Pug-шаблонами и используются как контейнеры �
 | GET      | `/admin`             | admin   | Административная панель (обзор)                            |
 | GET      | `/admin/users`       | admin   | Управление учётными ролями (мастера, администраторы)       |
 | GET      | `/admin/clients`     | admin   | Управление клиентами                                       |
-| GET      | `/admin/masters`     | admin   | Управление мастерами (карточки, привязки к услугам)         |
+| GET      | `/admin/masters`     | admin   | Управление мастерами (карточки, привязки к услугам)        |
 | GET      | `/admin/categories`  | admin   | Управление категориями услуг                               |
 | GET      | `/admin/services`    | admin   | Управление услугами и привязками мастер↔услуга             |
-| GET      | `/admin/schedules`   | admin   | Расписания мастеров                                         |
-| GET      | `/admin/appointments`| admin   | Все записи (фильтры, смена статусов)                        |
+| GET      | `/admin/schedules`   | admin   | Расписания мастеров                                        |
+| GET      | `/admin/appointments`| admin   | Все записи (фильтры, смена статусов)                       |
 | GET      | `/admin/reports`     | admin   | Построение отчётов и выгрузка CSV                          |
 
 ## REST API (JSON)

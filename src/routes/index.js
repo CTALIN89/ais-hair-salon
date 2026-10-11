@@ -11,6 +11,21 @@ const accountController = require('../controllers/accountController');
 const adminController = require('../controllers/adminController');
 const authController = require('../controllers/authController');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const passport = require('../config/passport');
+
+// Yandex OAuth
+router.get('/auth/yandex',
+  passport.authenticate('yandex', { scope: ['login:email', 'login:info'] })
+);
+
+router.get('/auth/yandex/callback',
+  passport.authenticate('yandex', { failureRedirect: '/auth/login?error=oauth_failed' }),
+  (req, res) => {
+    req.session.user = req.user;
+    req.session.userId = req.user.id;
+    res.redirect('/account');
+  }
+  );
 
 router.get('/', homeController.index);
 

@@ -4,6 +4,7 @@ npm-debug.log*
 .DS_Store
 coverage/
 .nyc_output/
+logs/
 *.log
 
 # Uploaded media (keep folders, ignore contents)

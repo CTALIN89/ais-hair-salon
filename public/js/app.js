@@ -1231,4 +1231,18 @@
       notify('Сетевая ошибка при загрузке', 'error');
     });
   }
+  
+  function trackEvent(category, action, label) {
+  if (window.ym && process.env?.YANDEX_METRIKA_ID) {
+    window.ym(process.env.YANDEX_METRIKA_ID, 'reachGoal', action, {
+      category, label,
+    });
+  }
+}
+
+// Пример: отслеживание создания записи
+api('POST', '/api/appointments', data).then((resp) => {
+  trackEvent('booking', 'appointment_created', `service_${data.service_id}`);
+  notify('Запись создана', 'success');
+});
 })();

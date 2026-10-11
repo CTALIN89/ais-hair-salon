@@ -91,4 +91,35 @@ if (require.main === module) {
   });
 }
 
+// Health Check для мониторинга
+app.get('/health', async (req, res) => {
+  const db = require('./config/db');
+  const startTime = Date.now();
+  
+  try {
+    await db.query('SELECT 1');
+    const responseTime = Date.now() - startTime;
+    
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        status: 'connected',
+        responseTimeMs: responseTime,
+      },
+      version: require('../package.json').version,
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      database: {
+        status: 'disconnected',
+        error: err.message,
+      },
+    });
+  }
+});
+
 module.exports = app;
