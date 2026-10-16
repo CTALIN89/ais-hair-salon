@@ -65,6 +65,20 @@ async function findById(id) {
   return mapRow(rows[0]);
 }
 
+async function findByEmail(email) {
+  const [rows] = await db.query(
+    `SELECT u.id, u.login, u.role_id, u.full_name, u.email, u.phone,
+            u.is_active, u.created_at, u.password_hash,
+            r.code AS role_code, r.name AS role_name
+       FROM users u
+       JOIN roles r ON r.id = u.role_id
+      WHERE u.email = ?
+      LIMIT 1`,
+    [email]
+  );
+  return mapRow(rows[0]);
+}
+
 async function create({ login, password, role_id, full_name, email, phone }) {
   // Проверка дубликатов одним запросом по всем трём уникальным столбцам.
   const [dupRows] = await db.query(
@@ -229,6 +243,7 @@ function publicView(user) {
 module.exports = {
   findByLogin,
   findById,
+  findByEmail, 
   create,
   update,
   list,
