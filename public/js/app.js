@@ -1233,11 +1233,15 @@
   }
   
   function trackEvent(category, action, label) {
+     // Переменная YANDEX_METRIKA_ID закомментирована для устранения предупреждений на хостинге.
+  // На фронтенде (в браузере) переменные process.env не работают без специального сборщика (Webpack/Vite).
+  /*
   if (window.ym && process.env?.YANDEX_METRIKA_ID) {
     window.ym(process.env.YANDEX_METRIKA_ID, 'reachGoal', action, {
       category, label,
     });
   }
+ */   
 }
 
 // Пример: отслеживание создания записи
