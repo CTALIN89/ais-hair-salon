@@ -153,7 +153,7 @@ async function reportsPage(req, res, next) {
         `SELECT u.id, u.full_name
            FROM users u
            JOIN clients c ON c.user_id = u.id
-          WHERE u.is_active = 1
+          WHERE u.is_active = TRUE
           ORDER BY u.full_name`
       ).then((r) => r[0]),
     ]);

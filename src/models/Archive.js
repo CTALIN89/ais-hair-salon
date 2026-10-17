@@ -46,7 +46,7 @@ async function create({ from, to, createdBy } = {}) {
               status, actual_price, base_price, created_at, updated_at
          FROM appointments
         WHERE status IN ('Completed', 'Cancelled')
-          AND DATE(start_at) BETWEEN ? AND ?
+          AND start_at::date BETWEEN ? AND ?
         FOR UPDATE`,
       [from, to]
     );
