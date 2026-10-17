@@ -116,9 +116,10 @@ app.use((err, req, res, _next) => {
 });
 
 if (require.main === module) {
-  app.listen(config.port, () => {
+  const PORT = process.env.PORT || config.port || 3000;
+  app.listen(PORT, '0.0.0.0', () => {
     // eslint-disable-next-line no-console
-    console.log(`Salon app listening on http://localhost:${config.port}`);
+    console.log(`Salon app listening on http://0.0.0.0:${PORT}`);
   });
 }
 
