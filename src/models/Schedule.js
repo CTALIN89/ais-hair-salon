@@ -1,16 +1,8 @@
 'use strict';
 
 const db = require('../config/db');
-const {
-  ValidationError,
-  ConflictError,
-  NotFoundError,
-} = require('../errors');
-const {
-  isIsoDate,
-  isPositiveInt,
-  isSlotStep15,
-} = require('../utils/validators');
+const { ValidationError, ConflictError, NotFoundError } = require('../errors');
+const { isIsoDate, isPositiveInt, isSlotStep15 } = require('../utils/validators');
 const { buildIlikeFilter, validateQuery } = require('../services/Search_Service');
 
 function parseTime(s) {
@@ -19,10 +11,7 @@ function parseTime(s) {
   if (!m) return null;
   const h = Number(m[1]);
   const mi = Number(m[2]);
-  const se = m[3] !== undefined ? Number(m[3]) : 0;
-  if (!Number.isInteger(h) || h < 0 || h > 23) return null;
-  if (!Number.isInteger(mi) || mi < 0 || mi > 59) return null;
-  if (!Number.isInteger(se) || se < 0 || se > 59) return null;
+  if (!Number.isInteger(h) || h < 0 || h > 23 || !Number.isInteger(mi) || mi < 0 || mi > 59) return null;
   return { h, m: mi };
 }
 
@@ -34,9 +23,7 @@ function formatMinutes(min) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function formatDateTime(date, min) {
-  return `${date} ${formatMinutes(min)}:00`;
-}
+function formatDateTime(date, min) { return `${date} ${formatMinutes(min)}:00`; }
 
 function validateCreate(masterId, input) {
   const details = {};
@@ -57,14 +44,11 @@ function validateCreate(masterId, input) {
     else if ((endMin - startMin) % slotMin !== 0) details.range = 'duration_not_multiple_of_slot_min';
   }
 
-  if (Object.keys(details).length > 0) {
-    throw new ValidationError('Некорректные параметры расписания', details);
-  }
+  if (Object.keys(details).length > 0) throw new ValidationError('Некорректные параметры расписания', details);
 
   return {
     masterId, date,
-    startMin: toMinutes(startParsed),
-    endMin: toMinutes(endParsed),
+    startMin: toMinutes(startParsed), endMin: toMinutes(endParsed),
     startTime: `${formatMinutes(toMinutes(startParsed))}:00`,
     endTime: `${formatMinutes(toMinutes(endParsed))}:00`,
     slotMin, createdBy,
@@ -79,15 +63,13 @@ async function create(masterId, input) {
       `SELECT id FROM schedules WHERE master_id = ? AND work_date = ? FOR UPDATE`,
       [v.masterId, v.date]
     );
-    if (existing.length > 0) {
-      throw new ConflictError('Расписание на эту дату уже существует', { code: 'schedule_exists' });
-    }
+    if (existing.length > 0) throw new ConflictError('Расписание на эту дату уже существует', { code: 'schedule_exists' });
 
     const [schRes] = await conn.query(
       `INSERT INTO schedules (master_id, work_date, start_time, end_time, slot_min, created_by) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
       [v.masterId, v.date, v.startTime, v.endTime, v.slotMin, v.createdBy]
     );
-    const scheduleId = schRes[0].id;
+    const scheduleId = schRes[0].id; // так как RETURNING id возвращает массив объектов
 
     const count = (v.endMin - v.startMin) / v.slotMin;
     const rows = new Array(count);
@@ -117,14 +99,8 @@ async function listByMaster(masterId, filters = {}) {
   const where = ['s.master_id = ?'];
   const params = [masterId];
 
-  if (from !== undefined && from !== null) {
-    if (!isIsoDate(from)) throw new ValidationError('Некорректная дата `from`', { from: 'invalid' });
-    where.push('s.work_date >= ?'); params.push(from);
-  }
-  if (to !== undefined && to !== null) {
-    if (!isIsoDate(to)) throw new ValidationError('Некорректная дата `to`', { to: 'invalid' });
-    where.push('s.work_date <= ?'); params.push(to);
-  }
+  if (from) { where.push('s.work_date >= ?'); params.push(from); }
+  if (to) { where.push('s.work_date <= ?'); params.push(to); }
 
   const [rows] = await db.query(
     `SELECT s.id, s.master_id, s.work_date, s.start_time, s.end_time, s.slot_min, s.created_by,
@@ -143,10 +119,7 @@ async function listByMaster(masterId, filters = {}) {
     params
   );
   return rows.map((r) => ({
-    ...r,
-    slots_total: Number(r.slots_total) || 0,
-    slots_free: Number(r.slots_free) || 0,
-    slots_busy: Number(r.slots_busy) || 0,
+    ...r, slots_total: Number(r.slots_total) || 0, slots_free: Number(r.slots_free) || 0, slots_busy: Number(r.slots_busy) || 0,
   }));
 }
 
@@ -171,9 +144,7 @@ async function remove(scheduleId) {
       [scheduleId]
     );
     if (active.length > 0) {
-      throw new ConflictError('Нельзя удалить расписание с активными записями', {
-        code: 'schedule_in_use', details: { appointments: active.map((r) => r.id) },
-      });
+      throw new ConflictError('Нельзя удалить расписание с активными записями', { code: 'schedule_in_use', details: { appointments: active.map((r) => r.id) } });
     }
     await conn.query(`DELETE FROM schedules WHERE id = ?`, [scheduleId]);
     return { id: scheduleId };
@@ -203,10 +174,7 @@ async function listAll({ q = '' } = {}) {
     filter.params
   );
   return rows.map((r) => ({
-    ...r,
-    slots_total: Number(r.slots_total) || 0,
-    slots_free: Number(r.slots_free) || 0,
-    slots_busy: Number(r.slots_busy) || 0,
+    ...r, slots_total: Number(r.slots_total) || 0, slots_free: Number(r.slots_free) || 0, slots_busy: Number(r.slots_busy) || 0,
   }));
 }
 
