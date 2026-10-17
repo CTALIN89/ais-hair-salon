@@ -1,10 +1,9 @@
 'use strict';
 const { Pool } = require('pg');
 
-// Пул соединений PostgreSQL для Supabase
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Обязательно для Supabase
+  ssl: { rejectUnauthorized: false }
 });
 
 async function withTransaction(fn) {
@@ -22,13 +21,20 @@ async function withTransaction(fn) {
   }
 }
 
+// Функция для замены '?' на '$1', '$2' и т.д. для PostgreSQL
+function formatQuery(text, params) {
+  let index = 0;
+  const formattedText = text.replace(/\?/g, () => `$${++index}`);
+  return { text: formattedText, values: params };
+}
+
 module.exports = {
   pool,
   withTransaction,
-  // Обертка для совместимости с mysql2:
-  // Возвращает массив [rows, fields], чтобы старый код с const [rows] = ... не падал
+  // Обертка, которая адаптирует старый синтаксис MySQL под PostgreSQL
   query: async (text, params) => {
-    const res = await pool.query(text, params);
+    const formatted = formatQuery(text, params);
+    const res = await pool.query(formatted.text, formatted.values);
     return [res.rows, res.fields]; 
   },
   end: () => pool.end()
