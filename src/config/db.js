@@ -16,8 +16,6 @@ async function withTransaction(fn) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    
-    // Обертка для клиента транзакции, чтобы conn.query возвращал [rows, fields]
     const clientWrapper = {
       query: async (text, params) => {
         const formatted = formatQuery(text, params);
@@ -25,7 +23,6 @@ async function withTransaction(fn) {
         return [res.rows, res.fields];
       }
     };
-
     const result = await fn(clientWrapper);
     await client.query('COMMIT');
     return result;
