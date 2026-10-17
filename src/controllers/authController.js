@@ -187,6 +187,15 @@ async function login(req, res, next) {
 
   try {
     const user = loginValue ? await User.findByLogin(loginValue) : null;
+    // ВРЕМЕННАЯ ОТЛАДКА
+console.log('--- ПОПЫТКА ВХОДА ---');
+console.log('Введен логин:', loginValue);
+console.log('Введен пароль:', password);
+console.log('Найден ли пользователь:', !!user);
+if (user) {
+  console.log('Хэш из БД:', user.password_hash);
+  console.log('Пароль верный?:', User.verifyPassword(user, password));
+}
     const ok = user && user.is_active && User.verifyPassword(user, password);
 
     if (!ok) {
