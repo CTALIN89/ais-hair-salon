@@ -49,7 +49,7 @@ async function assertNotLastActiveAdmin(userIdAffected) {
     `SELECT u.id
        FROM users u
        JOIN roles r ON r.id = u.role_id
-      WHERE r.code = 'admin' AND u.is_active = 1`
+      WHERE r.code = 'admin' AND u.is_active = TRUE`
   );
   // Если активных админов несколько (>1) — операция безопасна.
   if (rows.length > 1) return;
