@@ -9,7 +9,12 @@ const db = require('./db');
 /**
  * Стратегия аутентификации через Yandex ID (OAuth2).
  * Требует переменных окружения YANDEX_CLIENT_ID, YANDEX_CLIENT_SECRET.
+ * 
+ * ЗАКОММЕНТИРОВАНО: Чтобы убрать предупреждения на хостинге RelaxDev об отсутствующих
+ * переменных окружения. Раскомментируйте и добавьте ключи в .env, если захотите включить OAuth.
  */
+
+/*
 if (process.env.YANDEX_CLIENT_ID) {
   passport.use(new YandexStrategy({
     clientID: process.env.YANDEX_CLIENT_ID,
@@ -48,5 +53,6 @@ if (process.env.YANDEX_CLIENT_ID) {
     }
   }));
 }
+*/
 
 module.exports = passport;
