@@ -17,6 +17,9 @@ const pool = mysql.createPool({
   dateStrings: true,
   decimalNumbers: true,
   charset: 'utf8mb4_unicode_ci',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 async function withTransaction(fn) {
