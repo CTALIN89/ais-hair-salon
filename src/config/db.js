@@ -25,6 +25,11 @@ async function withTransaction(fn) {
 module.exports = {
   pool,
   withTransaction,
-  query: (text, params) => pool.query(text, params),
+  // Обертка для совместимости с mysql2:
+  // Возвращает массив [rows, fields], чтобы старый код с const [rows] = ... не падал
+  query: async (text, params) => {
+    const res = await pool.query(text, params);
+    return [res.rows, res.fields]; 
+  },
   end: () => pool.end()
 };
