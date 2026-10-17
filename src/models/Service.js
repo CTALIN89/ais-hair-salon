@@ -16,8 +16,6 @@ const { buildIlikeFilter, validateQuery } = require('../services/Search_Service'
 // Поля для поиска по сущности Service 
 const SERVICE_SEARCH_FIELDS = ['s.name', 's.description', 'c.name'];
 
-// Максимальная длина описания услуги. БД хранит как TEXT, но для UX и защиты
-// от злонамеренных больших payload нормализуем до разумного предела.
 const DESCRIPTION_MAX_LEN = 2000;
 const NAME_MAX_LEN = 128;
 
@@ -25,20 +23,24 @@ function mapRow(row) {
   if (!row) return null;
   return {
     ...row,
-    is_active: row.is_active === 1 || row.is_active === true,
+    // В PostgreSQL драйвер pg возвращает true/false, это проверка на всякий случай
+    is_active: row.is_active === true || row.is_active === 1, 
   };
 }
 
 async function list({ activeOnly = true, categoryId = null, q = '' } = {}) {
   const where = ['1 = 1'];
   const params = [];
+  
   if (activeOnly) {
-    where.push('s.is_active = 1');
+    // ИСПРАВЛЕНИЕ: 1 заменено на TRUE
+    where.push('s.is_active = TRUE'); 
   }
   if (categoryId != null) {
     where.push('s.category_id = ?');
     params.push(categoryId);
   }
+  
   const trimmed = validateQuery(q);
   const filter = buildIlikeFilter(trimmed, SERVICE_SEARCH_FIELDS);
 
@@ -131,7 +133,6 @@ function validatePatch(patch, { required = false } = {}) {
     }
   }
 
-  // description опционален в create тоже
   if (patch.description !== undefined) {
     if (patch.description === null) {
       values.description = null;
@@ -139,7 +140,6 @@ function validatePatch(patch, { required = false } = {}) {
       const normalized = normalizeString(patch.description, {
         maxLen: DESCRIPTION_MAX_LEN,
       });
-      // пустая строка после trim → храним NULL вместо пустоты
       values.description = normalized && normalized.length > 0 ? normalized : null;
     }
   }
@@ -154,7 +154,8 @@ function validatePatch(patch, { required = false } = {}) {
   }
 
   if (patch.is_active !== undefined) {
-    values.is_active = patch.is_active ? 1 : 0;
+    // ИСПРАВЛЕНИЕ: true/false вместо 1/0
+    values.is_active = patch.is_active ? true : false; 
   }
 
   return { errors, values };
@@ -178,10 +179,12 @@ async function create(data = {}) {
 
   await assertCategoryExists(values.category_id);
 
-  const [res] = await db.query(
+  // ИСПРАВЛЕНИЕ: 1 заменено на TRUE, добавлено RETURNING id (так как в PostgreSQL нет insertId)
+  const [rows] = await db.query(
     `INSERT INTO services
        (category_id, name, description, duration_min, base_price, image_url, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, 1)`,
+     VALUES (?, ?, ?, ?, ?, ?, TRUE)
+     RETURNING id`,
     [
       values.category_id,
       values.name,
@@ -191,7 +194,9 @@ async function create(data = {}) {
       values.image_url !== undefined ? values.image_url : null,
     ]
   );
-  return findById(res.insertId);
+  
+  // Возвращаем по ID первой вставленной строки
+  return findById(rows[0].id); 
 }
 
 async function update(id, patch = {}) {
@@ -205,7 +210,6 @@ async function update(id, patch = {}) {
     throw new ValidationError('Некорректные данные услуги', { errors });
   }
 
-  // Пустой patch — просто вернуть текущее состояние.
   const keys = Object.keys(values);
   if (keys.length === 0) {
     return existing;
@@ -227,11 +231,17 @@ async function update(id, patch = {}) {
 }
 
 async function deactivate(id) {
-  const [res] = await db.query(
-    `UPDATE services SET is_active = 0 WHERE id = ?`,
+  // ИСПРАВЛЕНИЕ: 0 заменено на FALSE
+  const [rows] = await db.query(
+    `UPDATE services SET is_active = FALSE WHERE id = ?`,
     [id]
   );
-  return res.affectedRows > 0;
+  
+  // В PostgreSQL количество обновленных строк находится в rowCount. 
+  // Но если ваш db.query адаптирован под mysql2, то он может возвращать [rows, fields].
+  // Поэтому используем безопасную проверку.
+  const affected = rows.rowCount !== undefined ? rows.rowCount : (rows.affectedRows || 0);
+  return affected > 0;
 }
 
 module.exports = {
