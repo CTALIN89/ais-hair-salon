@@ -1,50 +1,30 @@
 'use strict';
+const { Pool } = require('pg');
 
-const mysql = require('mysql2/promise');
-const config = require('./index');
-
-// Пул соединений MySQL. Используется во всех моделях и скриптах
-// через `require('../config/db')`.
-const pool = mysql.createPool({
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.user,
-  password: config.db.password || '',
-  database: config.db.database,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  dateStrings: true,
-  decimalNumbers: true,
-  charset: 'utf8mb4_unicode_ci',
-  ssl: {
-    rejectUnauthorized: false
-  }
+// Пул соединений PostgreSQL для Supabase
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Обязательно для Supabase
 });
 
 async function withTransaction(fn) {
-  const conn = await pool.getConnection();
+  const client = await pool.connect();
   try {
-    await conn.beginTransaction();
-    const result = await fn(conn);
-    await conn.commit();
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
     return result;
   } catch (err) {
-    try { await conn.rollback(); } catch (_) { /* ignore */ }
+    await client.query('ROLLBACK');
     throw err;
   } finally {
-    conn.release();
+    client.release();
   }
 }
 
-// Экспортируем пул "через делегирующий объект", а не сам PromisePool.
-const db = {
+module.exports = {
   pool,
   withTransaction,
-  query: pool.query.bind(pool),
-  execute: pool.execute.bind(pool),
-  getConnection: pool.getConnection.bind(pool),
-  end: pool.end.bind(pool),
+  query: (text, params) => pool.query(text, params),
+  end: () => pool.end()
 };
-
-module.exports = db;
