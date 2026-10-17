@@ -3,8 +3,6 @@
 const db = require('../config/db');
 const { buildIlikeFilter, validateQuery } = require('../services/Search_Service');
 
-// Модель профиля клиента. 
- 
 const CLIENT_SEARCH_FIELDS = [
   'u.full_name',
   'u.email',
@@ -39,14 +37,15 @@ async function findByUserId(userId) {
   if (!rows[0]) return null;
   return {
     ...rows[0],
-    is_active: rows[0].is_active === 1 || rows[0].is_active === true,
+    is_active: rows[0].is_active === true || rows[0].is_active === 1,
   };
 }
 
 async function list({ q = '', activeOnly = false } = {}) {
   const trimmed = validateQuery(q);
   const filter = buildIlikeFilter(trimmed, CLIENT_SEARCH_FIELDS);
-  const where = activeOnly ? 'u.is_active = 1' : '1 = 1';
+  // ИСПРАВЛЕНИЕ: 1 заменено на TRUE
+  const where = activeOnly ? 'u.is_active = TRUE' : '1 = 1';
   const [rows] = await db.query(
     `SELECT c.user_id AS id,
             u.full_name,
@@ -65,7 +64,7 @@ async function list({ q = '', activeOnly = false } = {}) {
   );
   return rows.map((r) => ({
     ...r,
-    is_active: r.is_active === 1 || r.is_active === true,
+    is_active: r.is_active === true || r.is_active === 1,
   }));
 }
 
@@ -86,7 +85,9 @@ async function updateProfile(userId, patch = {}) {
     `UPDATE clients SET ${sets.join(', ')} WHERE user_id = ?`,
     params
   );
-  return res.affectedRows > 0;
+  // ИСПРАВЛЕНИЕ: безопасная проверка для PostgreSQL (rowCount) и MySQL (affectedRows)
+  const affected = res.rowCount !== undefined ? res.rowCount : res.affectedRows;
+  return affected > 0;
 }
 
 module.exports = {

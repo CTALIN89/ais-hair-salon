@@ -5,10 +5,8 @@ const bcrypt = require('bcryptjs');
 const { ConflictError, NotFoundError, ValidationError } = require('../errors');
 const { buildIlikeFilter, validateQuery } = require('../services/Search_Service');
 
-// Количество раундов bcrypt для хэширования паролей.
 const BCRYPT_COST = 12;
 
-// Поля для поиска по сущности User.
 const USER_SEARCH_FIELDS = [
   'u.login',
   'u.full_name',
@@ -31,7 +29,7 @@ function mapRow(row) {
     full_name: row.full_name,
     email: row.email,
     phone: row.phone,
-    is_active: row.is_active === 1 || row.is_active === true,
+    is_active: row.is_active === true || row.is_active === 1,
     created_at: row.created_at,
     password_hash: row.password_hash,
   };
@@ -80,7 +78,6 @@ async function findByEmail(email) {
 }
 
 async function create({ login, password, role_id, full_name, email, phone }) {
-  // Проверка дубликатов одним запросом по всем трём уникальным столбцам.
   const [dupRows] = await db.query(
     `SELECT login, email, phone
        FROM users
@@ -103,13 +100,14 @@ async function create({ login, password, role_id, full_name, email, phone }) {
 
   const password_hash = bcrypt.hashSync(password, BCRYPT_COST);
 
-  const [res] = await db.query(
+  // ИСПРАВЛЕНИЕ: TRUE вместо 1 и RETURNING id
+  const [rows] = await db.query(
     `INSERT INTO users (login, password_hash, role_id, full_name, email, phone, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, 1)`,
+     VALUES (?, ?, ?, ?, ?, ?, TRUE) RETURNING id`,
     [login, password_hash, role_id, full_name, email, phone]
   );
 
-  return findById(res.insertId);
+  return findById(rows[0].id);
 }
 
 async function isLastActiveAdmin(id) {
@@ -117,7 +115,7 @@ async function isLastActiveAdmin(id) {
     `SELECT u.id
        FROM users u
        JOIN roles r ON r.id = u.role_id
-      WHERE r.code = 'admin' AND u.is_active = 1`
+      WHERE r.code = 'admin' AND u.is_active = TRUE`
   );
   return rows.length === 1 && Number(rows[0].id) === Number(id);
 }
@@ -129,7 +127,7 @@ async function deactivate(id) {
       { code: 'last_active_admin' }
     );
   }
-  await db.query('UPDATE users SET is_active = 0 WHERE id = ?', [id]);
+  await db.query('UPDATE users SET is_active = FALSE WHERE id = ?', [id]);
 }
 
 async function remove(id) {
@@ -139,16 +137,14 @@ async function remove(id) {
       { code: 'last_active_admin' }
     );
   }
-  await db.query('UPDATE users SET is_active = 0 WHERE id = ?', [id]);
+  await db.query('UPDATE users SET is_active = FALSE WHERE id = ?', [id]);
 }
 
 async function activate(id) {
-  await db.query('UPDATE users SET is_active = 1 WHERE id = ?', [id]);
+  await db.query('UPDATE users SET is_active = TRUE WHERE id = ?', [id]);
 }
 
 async function setRole(id, role_id) {
-  // Определяем code целевой роли — guard срабатывает, только если назначаем
-  // роль, отличную от admin.
   const [roleRows] = await db.query('SELECT code FROM roles WHERE id = ? LIMIT 1', [role_id]);
   if (roleRows.length === 0) {
     throw new NotFoundError('Роль не найдена');
@@ -166,16 +162,17 @@ async function setRole(id, role_id) {
 async function list({ q } = {}) {
   const trimmed = validateQuery(q);
   const filter = buildIlikeFilter(trimmed, USER_SEARCH_FIELDS);
+  // ИСПРАВЛЕНИЕ: 1 заменено на TRUE
   const sql = `
     SELECT u.id, u.login, u.role_id, u.full_name, u.email, u.phone,
            u.is_active, u.created_at,
            r.code AS role_code, r.name AS role_name,
            (
-             r.code = 'admin' AND u.is_active = 1 AND
+             r.code = 'admin' AND u.is_active = TRUE AND
              NOT EXISTS (
                SELECT 1 FROM users u2
                  JOIN roles r2 ON r2.id = u2.role_id
-               WHERE r2.code = 'admin' AND u2.is_active = 1 AND u2.id <> u.id
+               WHERE r2.code = 'admin' AND u2.is_active = TRUE AND u2.id <> u.id
              )
            ) AS is_last_active_admin
       FROM users u
@@ -192,8 +189,8 @@ async function list({ q } = {}) {
     full_name: row.full_name,
     email: row.email,
     phone: row.phone,
-    is_active: row.is_active === 1 || row.is_active === true,
-    is_last_active_admin: row.is_last_active_admin === 1 || row.is_last_active_admin === true,
+    is_active: row.is_active === true || row.is_active === 1,
+    is_last_active_admin: row.is_last_active_admin === true || row.is_last_active_admin === 1,
     created_at: row.created_at,
   }));
 }
@@ -216,13 +213,12 @@ async function update(id, patch = {}) {
     try {
       await db.query(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     } catch (err) {
-      if (err && err.code === 'ER_DUP_ENTRY') {
+      if (err && (err.code === '23505' || err.code === 'ER_DUP_ENTRY')) {
         throw new ConflictError('Логин, email или телефон уже заняты', { code: 'duplicate_user' });
       }
       throw err;
     }
   }
-  // Смена роли — отдельный путь, чтобы пройти через guard.
   if (patch.role_id !== undefined) {
     await setRole(id, Number(patch.role_id));
   }

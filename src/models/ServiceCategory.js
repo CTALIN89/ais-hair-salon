@@ -7,8 +7,6 @@ const { buildIlikeFilter, validateQuery } = require('../services/Search_Service'
 
 const CATEGORY_SEARCH_FIELDS = ['c.name'];
 
-// Модель категории услуг. Таблица 
-
 async function list({ q = '' } = {}) {
   const trimmed = validateQuery(q);
   const filter = buildIlikeFilter(trimmed, CATEGORY_SEARCH_FIELDS);
@@ -51,13 +49,14 @@ async function create({ name, sort_order = 0 } = {}) {
   }
 
   try {
-    const [res] = await db.query(
-      `INSERT INTO service_categories (name, sort_order) VALUES (?, ?)`,
+    // ИСПРАВЛЕНИЕ: Используем RETURNING id для получения ID в PostgreSQL
+    const [rows] = await db.query(
+      `INSERT INTO service_categories (name, sort_order) VALUES (?, ?) RETURNING id`,
       [normalized, sort_order]
     );
-    return findById(res.insertId);
+    return findById(rows[0].id);
   } catch (err) {
-    if (err && err.code === 'ER_DUP_ENTRY') {
+    if (err && (err.code === '23505' || err.code === 'ER_DUP_ENTRY')) {
       throw new ConflictError('Категория с таким названием уже существует', {
         code: 'duplicate_category',
       });
@@ -97,7 +96,7 @@ async function update(id, patch = {}) {
       params
     );
   } catch (err) {
-    if (err && err.code === 'ER_DUP_ENTRY') {
+    if (err && (err.code === '23505' || err.code === 'ER_DUP_ENTRY')) {
       throw new ConflictError('Категория с таким названием уже существует', {
         code: 'duplicate_category',
       });
@@ -113,9 +112,11 @@ async function remove(id) {
       `DELETE FROM service_categories WHERE id = ?`,
       [id]
     );
-    return res.affectedRows > 0;
+    const affected = res.rowCount !== undefined ? res.rowCount : res.affectedRows;
+    return affected > 0;
   } catch (err) {
-    if (err && err.code === 'ER_ROW_IS_REFERENCED_2') {
+    // ИСПРАВЛЕНИЕ: код ошибки нарушения внешнего ключа в PostgreSQL - 23503
+    if (err && (err.code === '23503' || err.code === 'ER_ROW_IS_REFERENCED_2')) {
       throw new ConflictError('Нельзя удалить категорию с услугами', {
         code: 'category_in_use',
       });

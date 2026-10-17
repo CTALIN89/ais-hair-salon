@@ -12,14 +12,13 @@ const MASTER_SEARCH_FIELDS = [
   'm.bio',
 ];
 
-// Модель профиля мастера. 
- 
 async function list({ activeOnly = true, q = '' } = {}) {
   const trimmed = validateQuery(q);
   const filter = buildIlikeFilter(trimmed, MASTER_SEARCH_FIELDS);
+  // ИСПРАВЛЕНИЕ: 1 заменено на TRUE
   const where = activeOnly
-    ? 'u.is_active = 1 AND m.is_active = 1'
-    : 'u.is_active = 1';
+    ? 'u.is_active = TRUE AND m.is_active = TRUE'
+    : 'u.is_active = TRUE';
   const [rows] = await db.query(
     `SELECT m.user_id       AS id,
             u.full_name,
@@ -37,7 +36,7 @@ async function list({ activeOnly = true, q = '' } = {}) {
   );
   return rows.map((row) => ({
     ...row,
-    is_active: row.is_active === 1 || row.is_active === true,
+    is_active: row.is_active === true || row.is_active === 1,
   }));
 }
 
@@ -61,9 +60,9 @@ async function findById(id) {
   if (!rows[0]) return null;
   return {
     ...rows[0],
-    is_active: rows[0].is_active === 1 || rows[0].is_active === true,
+    is_active: rows[0].is_active === true || rows[0].is_active === 1,
     user_is_active:
-      rows[0].user_is_active === 1 || rows[0].user_is_active === true,
+      rows[0].user_is_active === true || rows[0].user_is_active === 1,
   };
 }
 
@@ -79,14 +78,14 @@ async function findByService(serviceId) {
        JOIN users u ON u.id = m.user_id
        JOIN master_services ms ON ms.master_id = m.user_id
       WHERE ms.service_id = ?
-        AND u.is_active = 1
-        AND m.is_active = 1
+        AND u.is_active = TRUE
+        AND m.is_active = TRUE
       ORDER BY u.full_name`,
     [serviceId]
   );
   return rows.map((row) => ({
     ...row,
-    is_active: row.is_active === 1 || row.is_active === true,
+    is_active: row.is_active === true || row.is_active === 1,
   }));
 }
 
@@ -119,7 +118,8 @@ async function updateProfile(userId, patch = {}) {
     `UPDATE masters SET ${sets.join(', ')} WHERE user_id = ?`,
     params
   );
-  return res.affectedRows > 0;
+  const affected = res.rowCount !== undefined ? res.rowCount : res.affectedRows;
+  return affected > 0;
 }
 
 async function attachService(masterId, serviceId) {
@@ -139,7 +139,8 @@ async function attachService(masterId, serviceId) {
       [masterId, serviceId]
     );
   } catch (err) {
-    if (err && err.code === 'ER_DUP_ENTRY') {
+    // ИСПРАВЛЕНИЕ: код ошибки дубликата в PostgreSQL - 23505
+    if (err && (err.code === '23505' || err.code === 'ER_DUP_ENTRY')) {
       throw new ConflictError('Мастер уже оказывает эту услугу', {
         code: 'duplicate_master_service',
       });
@@ -155,7 +156,8 @@ async function detachService(masterId, serviceId) {
     `DELETE FROM master_services WHERE master_id = ? AND service_id = ?`,
     [masterId, serviceId]
   );
-  return res.affectedRows > 0;
+  const affected = res.rowCount !== undefined ? res.rowCount : res.affectedRows;
+  return affected > 0;
 }
 
 async function listServices(masterId) {
@@ -170,7 +172,7 @@ async function listServices(masterId) {
        FROM services s
        JOIN master_services ms ON ms.service_id = s.id
       WHERE ms.master_id = ?
-        AND s.is_active = 1
+        AND s.is_active = TRUE
       ORDER BY s.name`,
     [masterId]
   );
@@ -178,9 +180,10 @@ async function listServices(masterId) {
 }
 
 async function setActive(id, isActive) {
+  // ИСПРАВЛЕНИЕ: true/false вместо 1/0
   await db.query(
     `UPDATE masters SET is_active = ? WHERE user_id = ?`,
-    [isActive ? 1 : 0, id]
+    [isActive ? true : false, id]
   );
 }
 
