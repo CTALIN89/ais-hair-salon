@@ -227,7 +227,7 @@ async function update(id, patch = {}) {
 
 function verifyPassword(user, password) {
   if (!user || !user.password_hash || typeof password !== 'string') return false;
-  return bcrypt.compareSync(password, user.password_hash);
+  return bcrypt.compareSync(password, user.password_hash.trim());
 }
 
 function publicView(user) {
