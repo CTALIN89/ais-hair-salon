@@ -187,6 +187,8 @@ async function login(req, res, next) {
 
   try {
     const user = loginValue ? await User.findByLogin(loginValue) : null;
+    // 👇 ДОБАВЬТЕ ЭТУ СТРОКУ ДЛЯ ОТЛАДКИ 👇
+    console.log('DEBUG LOGIN:', { loginValue, found: !!user, isActive: user?.is_active, hash: user?.password_hash });
     const ok = user && user.is_active && User.verifyPassword(user, password);
 
     if (!ok) {
